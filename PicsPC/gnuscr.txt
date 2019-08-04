@@ -1,0 +1,6 @@
+ 
+set grid
+show grid
+set yrange [0:255]
+set xrange [0:320]
+plot "scan.txt" using 1:2 with lines
