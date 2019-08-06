@@ -15,7 +15,7 @@
 unsigned char pixels_buf[CAMERA_WIDTH*CAMERA_HEIGHT*4];
 
 // the file that we are reading from:
-const char* read_filename = "file1-empty.ppm";
+const char* read_filename = "file5.ppm";
 
 // the file that we are writing to
 char save_filename[] = "test.ppm";
@@ -93,6 +93,7 @@ void processImageCore() {
 	//pitch_offset
 	*/
 }
+
 /**
  * Detects sun, but not bird
 */
@@ -152,6 +153,89 @@ void processImageCompletion() {
 	for (int i=0; i<240; i++) {
 		set_pixel(i,mostRedColIndex,0,255,255);
 	}
+}
+
+void processImageChallenge() {
+	
+	int thresholdImage[320][240] = {0};
+	bool foundSun = false;
+	
+	for (int i=0; i<240; i++) {
+		for (int j=0; j<320; j++) {
+			int red = get_pixel(i,j,0);
+			int green = get_pixel(i,j,1);
+			int blue = get_pixel(i,j,2);
+			
+			if (isRed(red,green,blue)) {
+				thresholdImage[j][i] = 1;
+			}
+		}	
+	}
+	
+	// for all pixels in the image (except boundaries):
+	for (int x=1; x<319; x++) {
+		for (int y=1; y<239; y++) {
+			
+			int toplft = thresholdImage[x-1][y-1];
+			int topmid = thresholdImage[x][y-1];
+			int toprgt = thresholdImage[x+1][y-1];
+			
+			int midlft = thresholdImage[x-1][y];
+			int midrgt = thresholdImage[x+1][y];
+			
+			int btmlft = thresholdImage[x-1][y+1];
+			int btmmid = thresholdImage[x][y+1];
+			int btmrgt = thresholdImage[x+1][y+1];
+			
+			int verticalTotal = -toplft + toprgt - 2*midlft + 2*midrgt - btmlft + btmrgt;
+			//int horizontalTotal = toplft + 2*topmid + toprgt - btmlft + 2*btmmid + btmrgt;
+			
+			if (verticalTotal > 2) {
+				set_pixel(y, x, 255, 255, 255);
+			} else {
+				set_pixel(y, x, 33, 33, 33);
+			}
+		}	
+	}
+	/*
+	
+	// dont try and do anything else if you didn't find any red pixels
+	if (!foundSun) {
+		std::cout<<"nothing detected"<<std::endl;
+		return;	
+	}
+	
+	// check each pixel
+	
+	int mostRedRowIndex = -1;
+	int mostRedColIndex = -1;
+	int mostRedRow = 0;
+	int mostRedCol = 0;
+	
+	// go through and find the row and column with most red
+	// the ones with the most should be the centre of the circle
+	for (int i=0; i<320; i++) {
+		if (redInCols[i] > mostRedCol) {
+			mostRedCol = redInCols[i];
+			mostRedColIndex = i;
+		}	
+	}
+	
+	for (int i=0; i<240; i++) {
+		if (redInRows[i] > mostRedRow) {
+			mostRedRow = redInRows[i];
+			mostRedRowIndex = i;
+		}
+	}
+	
+	// draw cyan lines through centre
+	for (int i=0; i<320; i++) {
+		set_pixel(mostRedRowIndex,i,0,255,255);
+	}
+	
+	for (int i=0; i<240; i++) {
+		set_pixel(i,mostRedColIndex,0,255,255);
+	}*/
 }
 
 // returns color component (color==0 -red,color==1-green,color==2-blue
@@ -306,7 +390,7 @@ int main()
 	}
 	
 	// do your processing here
-	processImageCompletion();
+	processImageChallenge();
 	
 	/*printf(" Enter output image file name(with extension:\n");
 	scanf("%s",file_name);
