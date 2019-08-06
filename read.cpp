@@ -14,6 +14,12 @@
 #define CAMERA_HEIGHT 240 //Control Resolution from Camera
 unsigned char pixels_buf[CAMERA_WIDTH*CAMERA_HEIGHT*4];
 
+// the file that we are reading from:
+const char* read_filename = "file1-empty.ppm";
+
+// the file that we are writing to
+char save_filename[] = "test.ppm";
+
 // declaring them at the start, so that our code can be at the top
 unsigned char get_pixel( int,int, int);
 int set_pixel(int, int, char, char,char);
@@ -21,16 +27,18 @@ int ReadPPM(const char *);
 int SavePPM(char [5]);
 
 bool isRed(int r, int g, int b) {
-	float threshold = 1;
+	float threshold = 2.1;
 	
-	return (r / b > threshold && r / g > threshold);
+	float redness = (r / g) + (r / b);
+	return (redness >= threshold);
+	//return (r / b > threshold && r / g > threshold);
 }
 
-void processImage() {
-	int left = 320;
-	int top = 240;
-	int right = -1;
-	int bottom = -1;	
+void processImageCore() {
+	int left = 319;
+	int top = 239;
+	int right = 0;
+	int bottom = 0;	
 	
 	for (int i=0; i<240; i++) {
 		for (int j=0; j<320; j++) {
@@ -56,7 +64,7 @@ void processImage() {
 		}
 		
 	}
-	
+	/*
 	// draw green bounding box	
 	for (int i=0; i<320; i++) {
 		set_pixel(top,i,0,255,0);
@@ -78,6 +86,71 @@ void processImage() {
 	
 	for (int i=0; i<240; i++) {
 		set_pixel(i,centre_x,0,255,255);
+	}
+
+	// only if the yaw was in the middle though...
+	float yaw_offset = 48 + (160-centre_x)/10;
+	//pitch_offset
+	*/
+}
+/**
+ * Detects sun, but not bird
+*/
+void processImageCompletion() {
+	
+	int redInRows[240] = {0};
+	int redInCols[320] = {0};
+	bool foundSun = false;
+	
+	for (int i=0; i<240; i++) {
+		for (int j=0; j<320; j++) {
+			int red = get_pixel(i,j,0);
+			int green = get_pixel(i,j,1);
+			int blue = get_pixel(i,j,2);
+			
+			if (isRed(red,green,blue)) {
+				foundSun = true;
+				redInRows[i] ++;
+				redInCols[j] ++;	
+			}
+		}
+		
+	}
+	
+	// dont try and do anything else if you didn't find any red pixels
+	if (!foundSun) {
+		std::cout<<"nothing detected"<<std::endl;
+		return;	
+	}
+	
+	int mostRedRowIndex = -1;
+	int mostRedColIndex = -1;
+	int mostRedRow = 0;
+	int mostRedCol = 0;
+	
+	// go through and find the row and column with most red
+	// the ones with the most should be the centre of the circle
+	for (int i=0; i<320; i++) {
+		if (redInCols[i] > mostRedCol) {
+			mostRedCol = redInCols[i];
+			mostRedColIndex = i;
+		}	
+	}
+	
+	for (int i=0; i<240; i++) {
+		if (redInRows[i] > mostRedRow) {
+			mostRedRow = redInRows[i];
+			mostRedRowIndex = i;
+		}
+	}
+	
+	// draw cyan lines through centre
+	for (int i=0; i<320; i++) {
+		set_pixel(mostRedRowIndex,i,0,255,255);
+	}
+	
+	for (int i=0; i<240; i++) {
+		set_pixel(i,mostRedColIndex,0,255,255);
 	}
 }
 
@@ -227,13 +300,13 @@ int main()
 		return -1;
 	};*/
 	
-	if (ReadPPM("file5.ppm") != 0){
+	if (ReadPPM(read_filename) != 0){
 		printf(" Can not open file\n");
 		return -1;
 	}
 	
 	// do your processing here
-	processImage();
+	processImageCompletion();
 	
 	/*printf(" Enter output image file name(with extension:\n");
 	scanf("%s",file_name);
@@ -243,7 +316,7 @@ int main()
 		return -1;
 	};*/
 	
-	if (SavePPM("test.ppm") != 0){
+	if (SavePPM(save_filename) != 0){
 		printf(" Can not save file\n");
 		return -1;
 	};
