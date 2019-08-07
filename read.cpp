@@ -26,6 +26,9 @@ int set_pixel(int, int, char, char,char);
 int ReadPPM(const char *);
 int SavePPM(char [5]);
 
+/**
+* Returns true if the colour values are greater than the red threshold.
+*/
 bool isRed(int r, int g, int b) {
 	float threshold = 2.1;
 	
@@ -34,6 +37,11 @@ bool isRed(int r, int g, int b) {
 	//return (r / b > threshold && r / g > threshold);
 }
 
+
+/**
+* Colours the pixel in a new image based on the pixels it detects in the reading file.
+* i.e If pixel is higher than redness threshold colour red, if not, colour white.
+*/
 void processImageCore() {
 	int left = 319;
 	int top = 239;
@@ -48,7 +56,8 @@ void processImageCore() {
 			
 			if (isRed(red,green,blue)) {
 				set_pixel(i,j,255,0,0); // draw red where the program sees red
-					
+				
+				//setting edges of the red mass.
 				if (j < left) {
 					left = j;
 				} else if (j > right) {
@@ -118,7 +127,7 @@ void processImageCompletion() {
 		
 	}
 	
-	// dont try and do anything else if you didn't find any red pixels
+	// dont do anything else if you didn't find any red pixels
 	if (!foundSun) {
 		std::cout<<"nothing detected"<<std::endl;
 		return;	
@@ -145,7 +154,7 @@ void processImageCompletion() {
 		}
 	}
 	
-	// draw cyan lines through centre
+	// draw cyan lines through centre of biggest red mass
 	for (int i=0; i<320; i++) {
 		set_pixel(mostRedRowIndex,i,0,255,255);
 	}
@@ -338,14 +347,15 @@ int ReadPPM(const char *filename)
 
 } 
 
-
+/** 
+* saves image to a  ppm file
+*/
 int SavePPM(char fn[5]){
-  //save image into ppm file
   FILE *fp;
   char fname[9];
   sprintf(fname,"%s",fn);
   fp = fopen(fname,"wb");
-  if ( !fp){
+  if ( !fp){ // if file is not found
            printf("Unable to open the file\n");
            return -1;
    }
